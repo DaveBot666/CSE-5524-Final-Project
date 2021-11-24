@@ -6,7 +6,7 @@ import numpy as np
 
 
 def show_img(im):
-    cv2.imshow("image", im)
+    cv2.imshow("", im)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
