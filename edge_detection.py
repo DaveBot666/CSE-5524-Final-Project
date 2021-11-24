@@ -12,17 +12,22 @@ def show_img(im):
 
 
 def get_lines(im):
-    return cv2.filter2D(im, -1, np.asarray([[-1, -2, -1], [-1, 0, -1], [1, 2, 1]]))
+    # return cv2.filter2D(im, -1, np.asarray([[-.5, -7, -.5], [-1, -1, -1], [-.5, 7, -.5]]))
+    # return cv2.filter2D(im, -1, np.asarray([[-2,-3,-2], [-1,-1,-1,], [1,3,1]]))
+    return cv2.filter2D(im, -1, np.asarray([[1, 2, 1],
+                                            [-.9, -.9, -.9],
+                                            [-1, -2, -1]]))
 
 
 def extract_lines(im):
     labels, connected = cv2.connectedComponents(im, connectivity=8)
     for x in range(1, labels):
-        if np.where(connected == x)[0].size < 2:
+        if np.where(connected == x)[0].size < 50:
             im[np.where(connected == x)] = 0
         else:
             im[np.where(connected == x)] = 255
-    # im = cv2.dilate(im, np.ones((2,2)))
+    # im = cv2.dilate(im, np.ones((3,3)))
+
     show_img(np.asarray(im, dtype=np.uint8))
 
 
@@ -35,6 +40,8 @@ if __name__ == '__main__':
         # show_img(img)
         edges = get_lines(img)
         # show_img(edges)
+        # edges = get_lines(edges)
+        show_img(edges)
         extract_lines(edges)
 
 
