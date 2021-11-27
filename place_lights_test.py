@@ -1,4 +1,4 @@
-from place_lights import place_light_strand_on_house 
+from place_lights import place_light_strand_on_house, place_multiple_light_strands, create_strand
 from PIL import Image
 
 	
@@ -38,15 +38,33 @@ def test_2():
 
 	light_strand = Image.open(r"Lights/lights2.png")
 
-	start = [0, house.size[1]]
+	start = [0, 0]
 
-	end = [house.size[0], 0]
+	end = house.size
 
 
 	house = place_light_strand_on_house(house, light_strand, start, end)
 
 	house.show()
 
+def test_3():
+	"""
+	Should show the strand of lights going all the way from the upper left to upper right
+	of the house image.
+	"""
+	house = Image.open(r"Train Images/test1.jpg")
+
+	light = Image.open(r"Lights/white_light.png")
+
+	start = [100 , 0]
+
+	end = [100, house.size[1]]
+
+	points = [start, end]
+
+	house = place_multiple_light_strands(house, light, points)
+
+	house.show()
 
 
-test_2()
+test_3()
