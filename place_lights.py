@@ -82,8 +82,23 @@ def place_multiple_light_strands(house: Image, light: Image, points: list):
 
 
 def color_light(house: Image, point: list or tuple, segments_slic: np.array):
-	"""
-	
+	"""Returns the 1 - average color of the @house in the region of the super pixel
+	in @segment_slices of the @point in @house.
+
+	Requires:
+		point[0] < house.size[0] and point[1] < house.size[1] -
+		and
+		@segments_slice is a superpixels representation of @house
+
+	Args:
+		house: PIL image of house
+		point: point of interest whose regions average color we would like to return.
+
+
+	Returns:
+		An RGBA value that has the 1 - average color of the superpixel region of @point
+		on a scale from 0 to 1 with and alpha value of 1.
+
 	"""
 	img = np.array(house)
 	if point[0] >= len(img):
@@ -109,12 +124,26 @@ def color_light(house: Image, point: list or tuple, segments_slic: np.array):
 	return ret
 
 
-def pixel_grayscale(pixel: np.ndarray, threshold: int):
-	return sum([sum([abs(pixel[i]-pixel[j]) for i in range(j, len(pixel)-1)]) for j in range(len(pixel)-1)])<threshold
-
-
 def create_strand(house: Image, light: Image, start: list, end: list):
-	
+	"""
+
+	Requires:
+		start[0] < house.size[0] and start[1] < house.size[1] 
+		and
+		end[0] < house.size[0] and end[1] < house.size[1] 
+		
+
+	Args:
+		house: PIL image of house
+		start: Starting point for the light strand
+		end: End point for the light strand
+		
+
+
+	Returns:
+		A light strand with lights colored to 
+
+	"""
 	w = int(np.sqrt(sum([(e-s)**2 for e, s in zip(end, start)])))
 	dist = 5
 	lights = ceil(w/dist)
@@ -144,5 +173,3 @@ def create_strand(house: Image, light: Image, start: list, end: list):
 		ret.paste(Image.fromarray(light_temp), (c*light.size[0], 0), mask = Image.fromarray(light_temp))
 
 	return ret
-
-
