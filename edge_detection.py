@@ -15,7 +15,7 @@ def show_img(im):
     cv2.destroyAllWindows()
 
 
-def get_lines(im):
+def get_lines(im, my_filter=np.asarray([[1, 2, 1], [-.9, -.9, -.9], [-1, -2, -1]])):
     """Converts image into nearly binary image of edges
 
     :arg im: grayscale image
@@ -25,7 +25,7 @@ def get_lines(im):
     """
     # return cv2.filter2D(im, -1, np.asarray([[-.5, -7, -.5], [-1, -1, -1], [-.5, 7, -.5]]))
     # return cv2.filter2D(im, -1, np.asarray([[-2,-3,-2], [-1,-1,-1,], [1,3,1]]))
-    return cv2.filter2D(im, -1, np.asarray([[1, 2, 1], [-.9, -.9, -.9], [-1, -2, -1]]))
+    return cv2.filter2D(im, -1, my_filter)
 
 
 def extract_lines(im):
@@ -52,7 +52,7 @@ def extract_lines(im):
             # im[np.where(connected == x)] = 255
         else:
             im[np.where(connected == x)] = 0
-    show_img(np.asarray(im, dtype=np.uint8))
+    # show_img(np.asarray(im, dtype=np.uint8))
     return points
 
 
