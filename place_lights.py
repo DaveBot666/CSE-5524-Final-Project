@@ -7,8 +7,24 @@ import random
 from skimage.segmentation import slic
 from skimage import io
 
+def get_super_pixels_and_superpixel_colors(house: Image):
+	n_segments=int(house.size[0]*house.size[1]/25)
+	house_np = np.array(house)
+	segments_slic = slic(house_np, n_segments=n_segments, compactness=20, start_label=0)
+	
+	counts = np.array([0 for i in range(n_segments)])
+	colors = np.array([[0, 0, 0] for i in range(n_segments)])
+	for n in range(len(house_np)):
+		for m in range(len(house_np[n])):
+			classifier = segments_slic[(n, m)]
+			counts[classifier]+=1 
+			colors[classifier]+=house_np[n][m]
 
-def place_light_strand_on_house(house: Image, light_strand: Image, start: list, end: list) -> Image:
+	return segments_slic, np.array([colors[i]/counts[i] if counts[i]>0 else colors[i] for i in range(len(colors))])
+
+
+
+def place_light_strand_on_house(house: Image, light_strand: Image, start: list, end: list, segments_slic: np.array, super_pixels_color: list) -> Image:
 	"""Returns an image of @house with image @light_strand overlayed
 	from point start to point end.
 
@@ -56,7 +72,7 @@ def place_light_strand_on_house(house: Image, light_strand: Image, start: list, 
 	return ret
 
 
-def place_multiple_light_strands(house: Image, light: Image, points: list):
+def place_multiple_light_strands(house: Image, light: Image, points: list, segments_slic: np.array, super_pixels_color: list):
 	"""Returns an image of @house with image @light_strand overlayed
 	from point to point in @points
 
@@ -75,13 +91,13 @@ def place_multiple_light_strands(house: Image, light: Image, points: list):
 	"""
 	ret = copy.deepcopy(house)
 	for i in range(len(points)-1):
-		light_strand = create_strand(house, light, points[i], points[i+1])
-		ret = place_light_strand_on_house(ret, light_strand, points[i], points[i+1])
+		light_strand = create_strand(house, light, points[i], points[i+1], segments_slic, super_pixels_color)
+		ret = place_light_strand_on_house(ret, light_strand, points[i], points[i+1], segments_slic, super_pixels_color)
 
 	return ret
 
 
-def color_light(house: Image, point: list or tuple, segments_slic: np.array):
+def color_light(house: Image, point: list or tuple, segments_slic: np.array, super_pixels_color: list):
 	"""Returns the 1 - average color of the @house in the region of the super pixel
 	in @segment_slices of the @point in @house.
 
@@ -108,37 +124,22 @@ def color_light(house: Image, point: list or tuple, segments_slic: np.array):
 		point = (point[0], len(img[0])-1)
 
 	classifier = segments_slic[point]
-	count = 0
-	color = np.array([0, 0, 0])
-
-	
-
-	for i in range(len(segments_slic)):
-		for j in range(len(segments_slic[i])):
-			if segments_slic[i][j] == classifier:
-				count+=1 
-				color+=img[i][j]
-
-	color=color/(count*255)
+	color=super_pixels_color[classifier]/255
 	ret = (*(1-color), 1)
 	return ret
 
 
-def create_strand(house: Image, light: Image, start: list, end: list):
+def create_strand(house: Image, light: Image, start: list, end: list, segments_slic: np.array, super_pixels_color: list):
 	"""
-
 	Requires:
 		start[0] < house.size[0] and start[1] < house.size[1] 
 		and
 		end[0] < house.size[0] and end[1] < house.size[1] 
-		
 
 	Args:
 		house: PIL image of house
 		start: Starting point for the light strand
 		end: End point for the light strand
-		
-
 
 	Returns:
 		A light strand with lights colored to 
@@ -150,7 +151,7 @@ def create_strand(house: Image, light: Image, start: list, end: list):
 	ret = Image.new(mode='RGBA', size=(light.size[0]*lights, light.size[1]), color=(0, 0, 0, 0))
 	mask = np.array(copy.deepcopy(light))
 	img = np.array(house)
-	segments_slic = slic(img, n_segments=(house.size[0]*house.size[1]/25), compactness=20, start_label=1)
+	
 	theta = np.arctan2(end[1]-start[1], end[0]-start[0])
 
 	for c in range(lights):
@@ -159,7 +160,7 @@ def create_strand(house: Image, light: Image, start: list, end: list):
 		point = (y, x)
 		light_temp = np.array(copy.deepcopy(light))
 		p = [0, 0, 0, 0]
-		color_mask = color_light(house, point, segments_slic)
+		color_mask = color_light(house, point, segments_slic, super_pixels_color)
 		for i in range(1, len(mask)-1):
 			for j in range(1, len(mask[i])-1):
 				pix = light_temp[i, j]*color_mask
