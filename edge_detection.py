@@ -5,18 +5,37 @@ import numpy as np
 
 
 def show_img(im):
+    """Displays @im using cv2.imshow function. No title is used for the display.
+
+    :arg im: Any image to display with cv2.imshow function
+    :return: None
+    """
     cv2.imshow("", im)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 
 def get_lines(im):
+    """Converts image into nearly binary image of edges
+
+    :arg im: grayscale image
+    :returns:
+        Nearly binary image of edges as ndarry array
+
+    """
     # return cv2.filter2D(im, -1, np.asarray([[-.5, -7, -.5], [-1, -1, -1], [-.5, 7, -.5]]))
     # return cv2.filter2D(im, -1, np.asarray([[-2,-3,-2], [-1,-1,-1,], [1,3,1]]))
     return cv2.filter2D(im, -1, np.asarray([[1, 2, 1], [-.9, -.9, -.9], [-1, -2, -1]]))
 
 
 def extract_lines(im):
+    """Take image of edges and uses connected components to group the pixels to each edge. Then take the possible edges
+    and only keep one tenth of the best longest edges. Return a list of these edges where each edge is represented by a
+    list of the points in the edge.
+
+    :param im: binary or close to binary image with edges and lines
+    :return: list of list of points in each line
+    """
     labels, connected = cv2.connectedComponents(im, connectivity=8)
     sizes = []
     points = []
