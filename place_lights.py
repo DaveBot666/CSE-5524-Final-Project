@@ -8,9 +8,9 @@ from skimage.segmentation import slic
 from skimage import io
 
 def get_super_pixels_and_superpixel_colors(house: Image):
-	n_segments=int(house.size[0]*house.size[1]/25)
+	n_segments=int(np.sqrt(house.size[0]*house.size[1]))
 	house_np = np.array(house)
-	segments_slic = slic(house_np, n_segments=n_segments, compactness=20, start_label=0)
+	segments_slic = slic(house_np, n_segments=n_segments, compactness=10, start_label=0)
 	
 	counts = np.array([0 for i in range(n_segments)])
 	colors = np.array([[0, 0, 0] for i in range(n_segments)])
@@ -123,10 +123,11 @@ def color_light(house: Image, point: list or tuple, segments_slic: np.array, sup
 	if point[1] >= len(img[0]):
 		point = (point[0], len(img[0])-1)
 
-	classifier = segments_slic[point]
-	color=super_pixels_color[classifier]/255
-	ret = (*(1-color), 1)
-	return ret
+	color = super_pixels_color[segments_slic[point]]
+	a = min(color)
+	b = max(color)
+	color = [1-(c-a)/(b-a) for c in color]
+	return [*color, 1]
 
 
 def create_strand(house: Image, light: Image, start: list, end: list, segments_slic: np.array, super_pixels_color: list):
@@ -163,11 +164,7 @@ def create_strand(house: Image, light: Image, start: list, end: list, segments_s
 		color_mask = color_light(house, point, segments_slic, super_pixels_color)
 		for i in range(1, len(mask)-1):
 			for j in range(1, len(mask[i])-1):
-				pix = light_temp[i, j]*color_mask
-				pix_mean = sum(pix[:3])/3
-				if pix_mean !=0:
-					for n in range(len(pix)-1):
-						pix[n]=pix[n]*255/pix_mean				
+				pix = light_temp[i, j]*color_mask			
 
 				light_temp[i][j] = pix
 

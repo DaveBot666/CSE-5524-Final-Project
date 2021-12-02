@@ -1,10 +1,10 @@
-from place_lights import place_multiple_light_strands, get_super_pixels_and_superpixel_colors
+from place_lights import place_multiple_light_strands, get_super_pixels_and_superpixel_colors, color_light
 from edge_detection import extract_lines, get_lines
 from PIL import Image
 import cv2
 import numpy as np
 import sys
-from scipy.ndimage.interpolation import rotate
+from skimage import io
 
 
 def my_key(point):
@@ -41,6 +41,7 @@ def extract_points(file_path, my_filter=np.array([[1, 2, 1], [-.9, -.9, -.9], [-
 	house_width = house_cv.shape[1]
 	house_height = house_cv.shape[0]
 	edges = get_lines(house_cv, my_filter)
+	Image.fromarray(edges).show()
 	points = extract_lines(edges)
 	points_2 = [[[points[i][j][1], points[i][j][0]] for j in range(len(points[i]))] for i in range(len(points))]
 	for i in range(len(points_2)):
@@ -58,7 +59,7 @@ def extract_points(file_path, my_filter=np.array([[1, 2, 1], [-.9, -.9, -.9], [-
 		if t<len(points_2):
 			p.append(points_2[i][-1])
 
-		if len(p)>0 and points_2[i][0][1]<4/5*house_height and points_2[i][-1][1]<3/4*house_height:
+		if len(p)>0 and points_2[i][0][1]<3/4*house_height and points_2[i][-1][1]<3/4*house_height:
 			dp = sum([dist(p[i], p[i-1]) for i in range(len(p)-1)])
 			if dp > house_width/25:
 				points_3.append(p)
@@ -70,6 +71,8 @@ np.set_printoptions(threshold=sys.maxsize)
 if len(sys.argv) < 2:
     print(f'Pass in the path to the house image as the second argument!')
     exit()
+
+
 
 house_path = sys.argv[1]
 
@@ -118,6 +121,22 @@ for i in range(len(points)):
 
 print("Generating Color Scheme")
 segments_slic, super_pixels_color = get_super_pixels_and_superpixel_colors(house)
+sp = []
+y = len(segments_slic)
+for i in range(y):
+	sp.append([])
+	for j in range(len(segments_slic[i])):
+		color = super_pixels_color[segments_slic[i][j]]
+		a = min(color)
+		b = max(color)
+		color = [255-(c-a)*255/(b-a) for c in color]
+		sp[i].append(color)
+	print((i+1)/y*100, "%")
+
+sp = np.array(sp)
+print(sp.shape)
+io.imsave("super_pixel_color_mask.png", sp)
+io.show()
 print("Placing Lights")
 for i in range(x):
 	house = place_multiple_light_strands(house, light, points[i], segments_slic, super_pixels_color)
